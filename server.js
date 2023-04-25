@@ -13,7 +13,7 @@ const player1Sprite = { x: 0, y: 0 };
 const player2Sprite = { x: 0, y: 0 };
 
 http.listen(3000, ()=>{
-    console.log('listening on http://localhost:3000');
+    console.log('listening on http://192.168.100.4:3000');
 });
 
 io.on('connection', (socket) => {

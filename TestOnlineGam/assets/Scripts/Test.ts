@@ -12,7 +12,7 @@ export default class Test extends cc.Component {
     player2Sprite: cc.Node = null;
 
     start () {
-        const socket = io('ws://localhost:3000');
+        const socket = io('http://192.168.100.4:3000');
 
         // Listen for initial positions from the server
         socket.on('initial-positions', (positions) => {

@@ -812,6 +812,12 @@
       "__id__": 2
     },
     "_enabled": true,
+    "player1Sprite": {
+      "__id__": 5
+    },
+    "player2Sprite": {
+      "__id__": 7
+    },
     "_id": "f07Xg9uxdN1bAhFVdzdNzU"
   }
 ]
