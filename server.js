@@ -15,9 +15,10 @@ app.all('*', function(req, res, next) {
     next();
 });
 
-app.get('/',(req,res)=>{
-    res.send('<h1>Hello world</h1>');
+app.get('/game', (req, res) => {
+  res.sendFile(__dirname + '/game.html');
 });
+
 
 http.listen(3000, ()=>{
     console.log('listening on http://localhost:3000');
