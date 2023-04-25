@@ -5,20 +5,12 @@ const sio = require('socket.io')(http);
 const _ = require('underscore');
 const io = require('socket.io')(http);
 
-//设置跨域访问
-app.all('*', function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With");
-    res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
-    res.header("X-Powered-By",' 3.2.1')
-    res.header("Content-Type", "application/json;charset=utf-8");
-    next();
-});
+// Serve static files from the www directory
+app.use(express.static(__dirname + '/www'));
 
-app.get('/game', (req, res) => {
-  res.sendFile(__dirname + '/game.html');
-});
-
+// Define player sprites
+const player1Sprite = { x: 0, y: 0 };
+const player2Sprite = { x: 0, y: 0 };
 
 http.listen(3000, ()=>{
     console.log('listening on http://localhost:3000');

@@ -3,35 +3,41 @@ import { io } from "socket.io-client";
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class NewClass extends cc.Component {
+export default class Test extends cc.Component {
 
+    @property(cc.Node)
+    player1Sprite: cc.Node = null;
+
+    @property(cc.Node)
+    player2Sprite: cc.Node = null;
 
     start () {
-        const leftButton = this.node.getChildByName('leftButton');
-        const rightButton = this.node.getChildByName('rightButton');
-        const player1Sprite = this.node.getChildByName('player1');
-        const player2Sprite = this.node.getChildByName('player2');
-        const socket = io();
-        
+        const socket = io('ws://localhost:3000');
+
+        // Listen for initial positions from the server
+        socket.on('initial-positions', (positions) => {
+            this.player1Sprite.setPosition(positions.player1.x, positions.player1.y);
+            this.player2Sprite.setPosition(positions.player2.x, positions.player2.y);
+        });
+
         // Handle left button click for player 1
+        const leftButton = this.node.getChildByName('leftButton');
         leftButton.on('click', () => {
-          player1Sprite.x -= 10;
-          socket.emit('player1-moved', { x: player1Sprite.x, y: player1Sprite.y });
+            this.player1Sprite.x -= 10;
+            socket.emit('player1-moved', { x: this.player1Sprite.x, y: this.player1Sprite.y });
         });
-        
+
         // Handle right button click for player 1
+        const rightButton = this.node.getChildByName('rightButton');
         rightButton.on('click', () => {
-          player1Sprite.x += 10;
-          socket.emit('player1-moved', { x: player1Sprite.x, y: player1Sprite.y });
+            this.player1Sprite.x += 10;
+            socket.emit('player1-moved', { x: this.player1Sprite.x, y: this.player1Sprite.y });
         });
-        
+
         // Listen for updates to player 2's position from the server
         socket.on('player2-moved', (player) => {
-          player2Sprite.x = player.x;
-          player2Sprite.y = player.y;
+            this.player2Sprite.x = player.x;
+            this.player2Sprite.y = player.y;
         });
-        
     }
-
-    // update (dt) {}
 }
