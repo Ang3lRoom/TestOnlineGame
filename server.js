@@ -5,12 +5,21 @@ const sio = require('socket.io')(http);
 const _ = require('underscore');
 const io = require('socket.io')(http);
 
-// Serve static files from the www directory
-app.use(express.static(__dirname + '/www'));
+app.use(express.static(__dirname + '/www', {
+  maxAge: '1d',
+  setHeaders: (res, path) => {
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+  },
+}));
+
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  next();
+});
 
 // Define player sprites
 const player1Sprite = { x: 0, y: 0 };
-const player2Sprite = { x: 0, y: 0 };
+const player2Sprite = { x: -200, y: 0 };
 
 http.listen(3000, ()=>{
     console.log('listening on http://127.0.0.1:3000');
@@ -18,6 +27,19 @@ http.listen(3000, ()=>{
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+
+  socket.on('position-update', (positions) => {
+    player1Sprite.x = positions.player1.x;
+    player1Sprite.y = positions.player1.y;
+    player2Sprite.x = positions.player2.x;
+    player2Sprite.y = positions.player2.y;
+
+    // Broadcast the updated positions to all connected clients
+    io.emit('position-update', {
+      player1: { x: player1Sprite.x, y: player1Sprite.y },
+      player2: { x: player2Sprite.x, y: player2Sprite.y },
+    });
+  });
 
   // Emit the initial positions of both players to the new client
   socket.emit('initial-positions', {
@@ -27,16 +49,18 @@ io.on('connection', (socket) => {
 
   // Handle player 1 movement and emit updates to player 2
   socket.on('player1-moved', (player) => {
-    player1Sprite.x = player.x;
-    player1Sprite.y = player.y;
-    socket.broadcast.emit('player1-moved', { x: player1Sprite.x, y: player1Sprite.y });
+    player2Sprite.x = player.x;
+    player2Sprite.y = player.y;
+    console.log('Player 2 moved to', player2Sprite.x, player2Sprite.y);
+    socket.broadcast.emit('player2-moved', { x: player2Sprite.x, y: player2Sprite.y });
   });
 
   // Handle player 2 movement and emit updates to player 1
   socket.on('player2-moved', (player) => {
-    player2Sprite.x = player.x;
-    player2Sprite.y = player.y;
-    socket.broadcast.emit('player2-moved', { x: player2Sprite.x, y: player2Sprite.y });
+    player1Sprite.x = player.x;
+    player1Sprite.y = player.y;
+    console.log('Player 1 moved to', player1Sprite.x, player1Sprite.y);
+    socket.broadcast.emit('player1-moved', { x: player1Sprite.x, y: player1Sprite.y });
   });
 
   socket.on('disconnect', () => {
