@@ -25,8 +25,24 @@ http.listen(3000, ()=>{
     console.log('listening on http://127.0.0.1:3000');
 });
 
+let numConnectedClients = 0;
+
 io.on('connection', (socket) => {
   console.log('a user connected');
+  numConnectedClients++;
+
+  if (numConnectedClients === 1) {
+    // First client to connect is player 1
+    socket.emit('player-number', 1);
+  } else if (numConnectedClients === 2) {
+    // Second client to connect is player 2
+    socket.emit('player-number', 2);
+  } else {
+    // More than two clients connected - reject this connection
+    socket.emit('too-many-players');
+    socket.disconnect();
+    return;
+  }
 
   socket.on('position-update', (positions) => {
     player1Sprite.x = positions.player1.x;
