@@ -1,3 +1,5 @@
+import { io } from "socket.io-client";
+
 const {ccclass, property} = cc._decorator;
 
 @ccclass
@@ -15,14 +17,31 @@ export default class TicTacToeGrid extends cc.Component {
     @property(cc.Node)
     public cells: cc.Node[] = [];
 
-    onLoad() {
-        // Create the cells for the Tic Tac Toe grid
+    private socket: any = null; // Declare socket as a private property
+
+    playerNumber = 0; // numOfPlayers
+
+    start () {
+         this.socket = io('http://127.0.0.1:3000');
+ 
+         // Listen for player number message from the server
+         this.socket.on('player-number', (playerNumber) => {
+            this.playerNumber = playerNumber;
+            if (playerNumber === 1) {
+                // Player 1 logic
+            } else if (playerNumber === 2) {
+                // Player 2 logic
+            }
+        })        
+         
+         // Create the cells for the Tic Tac Toe grid
         for (let i = 0; i < 9; i++) {
-            this.cells[i].on(cc.Node.EventType.TOUCH_END, this.onCellTouched, this);
+            const leftButton = this.cells[i];
+            leftButton.on(cc.Node.EventType.TOUCH_END, this.onCellTouched, this);
         }
-    }
-    
-    private onCellTouched(event: cc.Event.EventTouch) {
+     }
+
+     private onCellTouched(event: cc.Event.EventTouch) {
         let cell = event.currentTarget;
         // Check if the cell is already marked and return if it is
         if (cell.childrenCount > 0) {
@@ -36,8 +55,12 @@ export default class TicTacToeGrid extends cc.Component {
         // Set the position of the parent node to (0, 0) before adding the marker
         marker.parent = cell;
         marker.setPosition(0, 0);
-        // Check for a win condition
-        if (this.checkWin(player)) console.log(`Player ${player} wins!`);
+        // Emit a "move" event to the server with the player number and cell index
+        let data = {
+            player: player,
+            cell: this.cells.indexOf(cell)
+        };
+        this.socket.emit('move', data);
     }
     
     private checkWin(player: number): boolean {

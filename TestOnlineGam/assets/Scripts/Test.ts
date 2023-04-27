@@ -17,7 +17,7 @@ export default class Test extends cc.Component {
 
     start () {
         
-        this.socket = io('http://127.0.0.1:3000');
+       /* this.socket = io('http://127.0.0.1:3000');
 
         // Listen for player number message from the server
         this.socket.on('player-number', (playerNumber) => {
@@ -78,6 +78,6 @@ export default class Test extends cc.Component {
         this.socket.on('player2-moved', (player) => {
             this.player2Sprite.x = player.x;
             this.player2Sprite.y = player.y;
-        });
+        });*/
     }
 }

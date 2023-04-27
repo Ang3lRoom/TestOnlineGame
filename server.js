@@ -1,8 +1,6 @@
 const express = require('express');
 const app = express();
-const http = require('http').Server(app);
-const sio = require('socket.io')(http);
-const _ = require('underscore');
+const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
 app.use(express.static(__dirname + '/www', {
@@ -12,74 +10,79 @@ app.use(express.static(__dirname + '/www', {
   },
 }));
 
-app.use((req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache');
-  next();
-});
+const PORT = process.env.PORT || 3000;
 
-// Define player sprites
-const player1Sprite = { x: 0, y: 0 };
-const player2Sprite = { x: -200, y: 0 };
+// Keep track of the players and their moves
+let players = {};
+let moves = Array(9).fill(null);
 
-http.listen(3000, ()=>{
-    console.log('listening on http://127.0.0.1:3000');
-});
-
-let numConnectedClients = 0;
-
+// Listen for incoming connections from clients
 io.on('connection', (socket) => {
-  console.log('a user connected');
-  numConnectedClients++;
+  console.log(`A user connected with socket id: ${socket.id}`);
 
-  if (numConnectedClients === 1) {
-    // First client to connect is player 1
-    socket.emit('player-number', 1);
-  } else if (numConnectedClients === 2) {
-    // Second client to connect is player 2
-    socket.emit('player-number', 2);
-  } else {
-    // More than two clients connected - reject this connection
-    socket.emit('too-many-players');
-    socket.disconnect();
-    return;
+  // Add the player to the game and send their player number
+  if (Object.keys(players).length < 2) {
+    let playerNumber = Object.keys(players).length + 1;
+    players[socket.id] = playerNumber;
+    socket.emit('player-number', playerNumber);
   }
 
-  socket.on('position-update', (positions) => {
-    player1Sprite.x = positions.player1.x;
-    player1Sprite.y = positions.player1.y;
-    player2Sprite.x = positions.player2.x;
-    player2Sprite.y = positions.player2.y;
+  // Listen for move events from the clients
+  socket.on('move', (data) => {
+    let player = data.player;
+    let cellIndex = data.cell;
 
-    // Broadcast the updated positions to all connected clients
-    io.emit('position-update', {
-      player1: { x: player1Sprite.x, y: player1Sprite.y },
-      player2: { x: player2Sprite.x, y: player2Sprite.y },
-    });
+    // Update the moves array with the move
+    moves[cellIndex] = player;
+
+    // Emit the move event to the other player
+    socket.broadcast.emit('move', data);
+
+    // Check for win conditions
+    let win = checkWin(player);
+    if (win) {
+      console.log(`Player ${player} wins!`);
+      // Emit the win event to both players
+      io.emit('win', player);
+    } else if (moves.filter(m => m === null).length === 0) {
+      console.log('Draw!');
+      // Emit the draw event to both players
+      io.emit('draw');
+    }
   });
 
-  // Emit the initial positions of both players to the new client
-  socket.emit('initial-positions', {
-    player1: { x: player1Sprite.x, y: player1Sprite.y },
-    player2: { x: player2Sprite.x, y: player2Sprite.y },
-  });
-
-  // Handle player 1 movement and emit updates to player 2
-  socket.on('player1-moved', (player) => {
-    player2Sprite.x = player.x;
-    player2Sprite.y = player.y;
-    console.log('Player 2 moved to', player2Sprite.x, player2Sprite.y);
-    socket.broadcast.emit('player2-moved', { x: player2Sprite.x, y: player2Sprite.y });
-  });
-
-  // Handle player 2 movement and emit updates to player 1
-  socket.on('player2-moved', (player) => {
-    player1Sprite.x = player.x;
-    player1Sprite.y = player.y;
-    console.log('Player 1 moved to', player1Sprite.x, player1Sprite.y);
-    socket.broadcast.emit('player1-moved', { x: player1Sprite.x, y: player1Sprite.y });
-  });
-
+  // Listen for disconnect events and remove the player from the game
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+    console.log(`User with socket id: ${socket.id} disconnected`);
+    delete players[socket.id];
   });
+});
+
+// Check for win conditions
+function checkWin(player) {
+  // Check rows
+  for (let i = 0; i < 9; i += 3) {
+    if (moves[i] === player && moves[i + 1] === player && moves[i + 2] === player) {
+      return true;
+    }
+  }
+  // Check columns
+  for (let i = 0; i < 3; i++) {
+    if (moves[i] === player && moves[i + 3] === player && moves[i + 6] === player) {
+      return true;
+    }
+  }
+  // Check diagonals
+  if (moves[0] === player && moves[4] === player && moves[8] === player) {
+    return true;
+  }
+  if (moves[2] === player && moves[4] === player && moves[6] === player) {
+    return true;
+  }
+  return false;
+}
+
+// Start the server
+http.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
