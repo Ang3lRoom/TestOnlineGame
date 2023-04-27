@@ -39,6 +39,30 @@ export default class TicTacToeGrid extends cc.Component {
             const leftButton = this.cells[i];
             leftButton.on(cc.Node.EventType.TOUCH_END, this.onCellTouched, this);
         }
+
+        this.socket.on('move', (data) => {
+            let player = data.player;
+            let cellIndex = data.cell;
+            // Update the game board with the player's marker
+            let cell = this.cells[cellIndex];
+            let markerPrefab = player === 1 ? this.circlePrefab : this.crossPrefab;
+            let marker = cc.instantiate(markerPrefab);
+            marker.parent = cell;
+            marker.setPosition(0, 0);
+          });
+          
+          this.socket.on('win', (player) => {
+            console.log(`Player ${player} wins!`);
+            // Show a win message to the player
+            // Reset the game board
+          });
+          
+          this.socket.on('draw', () => {
+            console.log('Draw!');
+            // Show a draw message to the player
+            // Reset the game board
+          });
+          
      }
 
      private onCellTouched(event: cc.Event.EventTouch) {
@@ -61,16 +85,6 @@ export default class TicTacToeGrid extends cc.Component {
             cell: this.cells.indexOf(cell)
         };
         this.socket.emit('move', data);
-    }
-    
-    private checkWin(player: number): boolean {
-        let marks = this.cells.map(c => c.childrenCount > 0 && c.children[0].name.startsWith(`player${player}`) ? 1 : 0);
-        let rows = [marks.slice(0, 3), marks.slice(3, 6), marks.slice(6)];
-        let cols = [[marks[0], marks[5], marks[6]], [marks[1], marks[4], marks[7]], [marks[2], marks[3], marks[8]]];
-        let diags = [[marks[0], marks[4], marks[8]], [marks[2], marks[4], marks[6]]];
-        return rows.some(r => r.every(m => m === 1)) ||
-               cols.some(c => c.every(m => m === 1)) ||
-               diags.some(d => d.every(m => m === 1));
     }
     
 }
