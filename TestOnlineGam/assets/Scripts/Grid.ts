@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import MainUI from "./UI/MainUI";
 
 const {ccclass, property} = cc._decorator;
 
@@ -20,6 +21,9 @@ export default class TicTacToeGrid extends cc.Component {
     private socket: any = null; // Declare socket as a private property
 
     playerNumber = 0; // numOfPlayers
+
+    @property(MainUI)
+    mainUI: MainUI = null;
 
     start () {
          this.socket = io('http://127.0.0.1:3000');
@@ -53,6 +57,8 @@ export default class TicTacToeGrid extends cc.Component {
           
           this.socket.on('win', (player) => {
             console.log(`Player ${player} wins!`);
+            this.mainUI.setGameState(player);
+            console.log("Testin");
             // Show a win message to the player
             // Reset the game board
           });
@@ -62,7 +68,6 @@ export default class TicTacToeGrid extends cc.Component {
             // Show a draw message to the player
             // Reset the game board
           });
-          
      }
 
      private onCellTouched(event: cc.Event.EventTouch) {
