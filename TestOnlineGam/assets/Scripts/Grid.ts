@@ -18,6 +18,12 @@ export default class TicTacToeGrid extends cc.Component {
     @property(cc.Node)
     public cells: cc.Node[] = [];
 
+    @property(cc.Node)
+    SmallStateSprite: cc.Node = null;
+
+    @property(cc.SpriteFrame)
+    public SmallStateSprites: cc.SpriteFrame[] = [];
+
     private socket: any = null; // Declare socket as a private property
 
     playerNumber = 0; // numOfPlayers
@@ -53,6 +59,8 @@ export default class TicTacToeGrid extends cc.Component {
             let marker = cc.instantiate(markerPrefab);
             marker.parent = cell;
             marker.setPosition(0, 0);
+            let smallSprite = player === 1 ? this.SmallStateSprites[1] : this.SmallStateSprites[0];
+            this.SmallStateSprite.getComponent(cc.Sprite).spriteFrame = smallSprite;
           });
           
           this.socket.on('win', (player) => {
@@ -84,6 +92,10 @@ export default class TicTacToeGrid extends cc.Component {
         // Set the position of the parent node to (0, 0) before adding the marker
         marker.parent = cell;
         marker.setPosition(0, 0);
+
+        let smallSprite = player === 1 ? this.SmallStateSprites[1] : this.SmallStateSprites[0];
+        this.SmallStateSprite.getComponent(cc.Sprite).spriteFrame = smallSprite;
+
         // Emit a "move" event to the server with the player number and cell index
         let data = {
             player: player,
