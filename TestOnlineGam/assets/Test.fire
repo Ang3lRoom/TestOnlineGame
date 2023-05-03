@@ -1439,7 +1439,7 @@
         0,
         0,
         1,
-        -1,
+        1,
         1,
         -1
       ]
@@ -2719,6 +2719,12 @@
     "_enabled": true,
     "gameState": {
       "__id__": 56
+    },
+    "player1Points": {
+      "__id__": 24
+    },
+    "player2Points": {
+      "__id__": 28
     },
     "_id": "415SjdZ21LGYOdztf9eOE4"
   },

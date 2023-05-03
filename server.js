@@ -42,20 +42,50 @@ io.on('connection', (socket) => {
     let win = checkWin(player);
     if (win) {
       console.log(`Player ${player} wins!`);
+      // Reset the moves array
+      moves = Array(9).fill(null);
       // Emit the win event to both players
       io.emit('win', player);
+      win = false;
     } else if (moves.filter(m => m === null).length === 0) {
       console.log('Draw!');
+      // Reset the moves array
+      moves = Array(9).fill(null);
       // Emit the draw event to both players
       io.emit('draw');
+      win = false;
     }
   });
 
-  // Listen for disconnect events and remove the player from the game
-  socket.on('disconnect', () => {
-    console.log(`User with socket id: ${socket.id} disconnected`);
-    delete players[socket.id];
-  });
+ // Create an object to store the game points earned by each player
+ let playerGamePoints = {
+  1: 0,
+  2: 0
+};
+
+// Listen for game point update message from the clients
+socket.on('update-game-points', (data) => {
+  let player = data.player;
+  let points = data.points;
+  
+  if (player === 1) {
+    playerGamePoints[1] += 1;
+    console.log("player 1 points" + playerGamePoints[1]);
+    socket.emit('game-points-updated', { player: 1, points: playerGamePoints[1] });
+  } else {
+    playerGamePoints[2] += 1;
+    socket.emit('game-points-updated', { player: 2, points: playerGamePoints[2] });
+    console.log("player 2 points" + playerGamePoints[2]);
+  }
+});
+
+
+// Listen for disconnect events and remove the player from the game
+socket.on('disconnect', () => {
+  console.log(`User with socket id: ${socket.id} disconnected`);
+  delete players[socket.id];
+});
+
 });
 
 // Check for win conditions

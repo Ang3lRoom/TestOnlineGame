@@ -62,21 +62,55 @@ export default class TicTacToeGrid extends cc.Component {
             let smallSprite = player === 1 ? this.SmallStateSprites[1] : this.SmallStateSprites[0];
             this.SmallStateSprite.getComponent(cc.Sprite).spriteFrame = smallSprite;
           });
-          
-          this.socket.on('win', (player) => {
+
+          // Create an object to store the game points earned by each player
+        let playerGamePoints = {
+            1: 0,
+            2: 0
+        };
+        
+        this.socket.on('win', (player) => {
             console.log(`Player ${player} wins!`);
-            this.mainUI.setGameState(player);
-            console.log("Testin");
+        
+            this.socket.on('game-points-updated', (data) => {
+                let player = data.player;
+                let points = data.points;
+                // Update the game points UI for the player who earned the points
+                playerGamePoints[player] = points;
+                this.mainUI.setGamePoints(player, playerGamePoints[player]);
+              });
+        
+            // Increase the game points earned by the winning player and send an update message to the server
+            playerGamePoints[player]++;
+            this.socket.emit('update-game-points', { player: player, points: playerGamePoints[player] });
+
+            // Update the game points UI for the winning player
+            this.mainUI.setGamePoints(player, playerGamePoints[player]);
+        
+            // Reset the grid after updating the game points UI
+            this.resetGrid();
+        
             // Show a win message to the player
             // Reset the game board
-          });
+        });
+        
           
           this.socket.on('draw', () => {
             console.log('Draw!');
             // Show a draw message to the player
             // Reset the game board
           });
+          
      }
+
+     resetGrid() {
+        // Remove all markers from the cells
+        for (let i = 0; i < 9; i++) {
+          let cell = this.cells[i];
+          // Remove all child nodes from the cell
+          cell.removeAllChildren();
+        }
+      }
 
      private onCellTouched(event: cc.Event.EventTouch) {
         let cell = event.currentTarget;
